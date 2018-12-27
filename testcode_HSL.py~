@@ -20,6 +20,18 @@ image_blank = np.zeros(imshape, dtype=np.uint8)
 #plt.imshow(image_blank)
 #plt.show()
 
+def HSL_conversion(img):
+    hsl_image = cv2.cvtColor(img, cv2.COLOR_RGB2HLS)
+    # BGR format in openCV
+    lower_yellow = np.array([0,60,100], dtype=np.uint8)
+    upper_yellow = np.array([110,255,255], dtype=np.uint8)
+    lower_white = np.array([10,180,20], dtype=np.uint8)
+    upper_white = np.array([255,255,255], dtype=np.uint8)
+    yellow = cv2.inRange(hsl_image, lower_yellow, upper_yellow)
+    white = cv2.inRange(hsl_image, lower_white, upper_white)
+    mask_yellow_n_white = cv2.bitwise_or(yellow, white)
+    return cv2.bitwise_and(img, img, mask = mask_yellow_n_white)
+
 def grayscale(img):
     return cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
 
@@ -102,25 +114,27 @@ high_th = 150
 
 vertices = np.array([[(120,imshape[0]), (420,330), (510,330), (900,imshape[0])]], dtype=np.int32) 
 
-rho = 1
+rho = 3
 theta = np.pi/180
 threshold = 1
-min_line_length = 10
-max_line_gap = 1 
+min_line_length = 50
+max_line_gap = 20 
 
 
 # Building a lane finding pipeline
-image_gray = grayscale(image)
+image_hsl = HSL_conversion(image)
+image_gray = grayscale(image_hsl)
 blur_gray = blur(image_gray, kernel_size)
 edges = canny(blur_gray, low_th, high_th)
 masked_edges = region_of_interest(edges, vertices) 
 line_img = hough_lines(masked_edges, rho, theta, threshold, min_line_length, max_line_gap)
 color_edges = np.dstack((edges, edges, edges))
 line_edges = cv2.addWeighted(color_edges, 0.8, line_img, 1, 0)
-line_edges = cv2.addWeighted(image, 0.8, line_img, 1, 0)
+#line_edges = cv2.addWeighted(image, 0.8, line_img, 1, 0)
 
 plt.subplot(141);plt.title('Original');plt.imshow(image)
-plt.subplot(142);plt.title('Canny Edges');plt.imshow(edges)
+plt.subplot(142);plt.title('HSL');plt.imshow(image_hsl)
+#plt.subplot(143);plt.title('Canny Edges');plt.imshow(edges)
 plt.subplot(143);plt.title('Masked Edges');plt.imshow(masked_edges)
 plt.subplot(144)
 plt.title('Lane Lines');plt.imshow(line_edges)
