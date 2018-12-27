@@ -9,13 +9,13 @@ from IPython.display import HTML
 
 #os.listdir("test_images/")
 
-global slope_right_next
-global intercept_right_next
-global slope_left_next
-global intercept_left_next
+#global slope_right_next
+#global intercept_right_next
+#global slope_left_next
+#global intercept_left_next
 
-#(slope_right_next, intercept_right_next) = (0.69, -30)
-#(slope_left_next, intercept_left_next) = (-0.71, 650)
+(slope_right_next, intercept_right_next) = (0.69, -30)
+(slope_left_next, intercept_left_next) = (-0.71, 650)
 
 
 def HSL_conversion(img):
@@ -78,7 +78,6 @@ def draw_lines(img, lines, color=[255, 0, 0], thickness=7):
             x += [x1,x2]
             y += [y1,y2]
             (slope, intercept_y) = np.polyfit(x,y,1)
-            #print(z)
             if slope > 0: # right lane
                 #print(round(slope,3))
                 #lane_right = np.append(lane_right, np.array([[slope, intercept_x, intercept_y]]),axis = 0)
@@ -94,8 +93,8 @@ def draw_lines(img, lines, color=[255, 0, 0], thickness=7):
     #print(intercept_y_pos)
     
     if (len(slope_pos)>2 and len(intercept_y_pos)>2): 
-        slope_right = slope_pos[abs(slope_pos - np.mean(slope_pos)) < 2*np.std(slope_pos)]
-        intercept_right = intercept_y_pos[abs(intercept_y_pos - np.mean(intercept_y_pos)) < 2*np.std(intercept_y_pos)]
+        slope_right = slope_pos[abs(slope_pos - np.mean(slope_pos)) < np.std(slope_pos)]
+        intercept_right = intercept_y_pos[abs(intercept_y_pos - np.mean(intercept_y_pos)) < np.std(intercept_y_pos)]
         
         slope_right = round(np.mean(slope_right), 2)
         intercept_right = round(np.mean(intercept_right), 2)
@@ -118,8 +117,8 @@ def draw_lines(img, lines, color=[255, 0, 0], thickness=7):
         #print(slope_right, intercept_right)
 
     if (len(slope_neg)>2 and len(intercept_y_neg)>2): 
-        slope_left = slope_neg[abs(slope_neg - np.mean(slope_neg)) < 2*np.std(slope_neg)]
-        intercept_left = intercept_y_neg[abs(intercept_y_neg - np.mean(intercept_y_neg)) < 2*np.std(intercept_y_neg)]
+        slope_left = slope_neg[abs(slope_neg - np.mean(slope_neg)) < np.std(slope_neg)]
+        intercept_left = intercept_y_neg[abs(intercept_y_neg - np.mean(intercept_y_neg)) < np.std(intercept_y_neg)]
         
         slope_left = round(np.mean(slope_left), 2)
         intercept_left = round(np.mean(intercept_left), 2)
@@ -143,11 +142,10 @@ def draw_lines(img, lines, color=[255, 0, 0], thickness=7):
     
 
     #print(slope_left, intercept_left)
-    print(slope_right, intercept_right)
+    #print(slope_right, intercept_right)
     if(~np.isnan(slope_left) and ~np.isnan(intercept_left) and ~np.isnan(slope_right) and ~np.isnan(intercept_right)):
-        None
-        #cv2.line(img, (520, int(520*slope_right+intercept_right)), (880, int(880*slope_right+intercept_right)), color, thickness)
-        #cv2.line(img, (120, int(120*slope_left+intercept_left)), (440, int(440*slope_left+intercept_left)), color, thickness)
+        cv2.line(img, (520, int(520*slope_right+intercept_right)), (880, int(880*slope_right+intercept_right)), color, thickness)
+        cv2.line(img, (120, int(120*slope_left+intercept_left)), (440, int(440*slope_left+intercept_left)), color, thickness)
 
 def hough_lines(img, rho, theta, threshold, min_line_len, max_line_gap):
     lines = cv2.HoughLinesP(img, rho, theta, threshold, np.array([]), \
@@ -167,8 +165,8 @@ def process_image(image):
     rho = 3
     theta = np.pi/180
     threshold = 1
-    min_line_length = 50
-    max_line_gap = 20 
+    min_line_length = 60 #50
+    max_line_gap = 30 #20 
     
     # Building a lane finding pipeline
     image_hsl = HSL_conversion(image)
@@ -177,8 +175,8 @@ def process_image(image):
     edges = canny(blur_gray, low_th, high_th)
     masked_edges = region_of_interest(edges, vertices) 
     line_img = hough_lines(masked_edges, rho, theta, threshold, min_line_length, max_line_gap)
-    #color_edges = np.dstack((edges, edges, edges))
-    line_edges = cv2.addWeighted(image_hsl, 0.8, line_img, 1, 0)
+    color_edges = np.dstack((edges, edges, edges))
+    line_edges = cv2.addWeighted(image, 0.8, line_img, 1, 0)
     return line_edges
 
 white_output = 'test_videos_output/solidWhiteRight.mp4'
@@ -186,14 +184,14 @@ yellow_output = 'test_videos_output/solidYellowLeft.mp4'
 challenge_output = 'test_videos_output/challenge.mp4'
 
 clip1 = VideoFileClip("test_videos/solidWhiteRight.mp4")
-clip2 = VideoFileClip("test_videos/solidYellowLeft.mp4").subclip(0,8)
+clip2 = VideoFileClip("test_videos/solidYellowLeft.mp4")#.subclip(0,8)
 clip3 = VideoFileClip("test_videos/challenge.mp4")
 
 white_clip = clip1.fl_image(process_image)
 white_clip.write_videofile(white_output, audio=False)
 
-#yellow_clip = clip2.fl_image(process_image)
-#yellow_clip.write_videofile(yellow_output, audio=False)
+yellow_clip = clip2.fl_image(process_image)
+yellow_clip.write_videofile(yellow_output, audio=False)
 
 #challenge_clip = clip3.fl_image(process_image)
 #challenge_clip.write_videofile(challenge_output, audio=False) 

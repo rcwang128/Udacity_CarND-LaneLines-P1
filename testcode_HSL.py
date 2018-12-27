@@ -117,8 +117,8 @@ vertices = np.array([[(120,imshape[0]), (420,330), (510,330), (900,imshape[0])]]
 rho = 3
 theta = np.pi/180
 threshold = 1
-min_line_length = 50
-max_line_gap = 20 
+min_line_length = 60
+max_line_gap = 30 
 
 
 # Building a lane finding pipeline
@@ -129,8 +129,8 @@ edges = canny(blur_gray, low_th, high_th)
 masked_edges = region_of_interest(edges, vertices) 
 line_img = hough_lines(masked_edges, rho, theta, threshold, min_line_length, max_line_gap)
 color_edges = np.dstack((edges, edges, edges))
-line_edges = cv2.addWeighted(color_edges, 0.8, line_img, 1, 0)
-#line_edges = cv2.addWeighted(image, 0.8, line_img, 1, 0)
+#line_edges = cv2.addWeighted(color_edges, 0.8, line_img, 1, 0)
+line_edges = cv2.addWeighted(image, 0.8, line_img, 1, 0)
 
 #plt.subplot(141);plt.title('Original');plt.imshow(image)
 #plt.subplot(142);plt.title('HSL');plt.imshow(image_hsl)
